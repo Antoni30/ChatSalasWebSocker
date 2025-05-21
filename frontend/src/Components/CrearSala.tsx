@@ -70,52 +70,110 @@ const CrearSala: React.FC<CrearSalaProps> = ({ onUnirSala }) => {
   const esError = mensaje.toLowerCase().includes("error");
 
   return (
-    <div style={{ maxWidth: 400, margin: "auto" }}>
-      <h2>Crear Sala</h2>
-      <input
-        type="text"
-        placeholder="Nombre de la sala"
-        value={nombreSala}
-        onChange={(e) => {
-          setNombreSala(e.target.value);
-          setMensaje("");
+    <div>
+      <div
+        style={{
+          padding: "20px",
+          borderRadius: "12px",
+          maxWidth: "300px",
+          margin: "auto",
         }}
-        style={{ width: "100%", marginBottom: 8 }}
-      />
-      <input
-        type="number"
-        min={1}
-        placeholder="Límite de usuarios"
-        value={limite}
-        onChange={(e) => {
-          setLimite(Number(e.target.value));
-          setMensaje("");
-        }}
-        style={{ width: "100%", marginBottom: 8 }}
-      />
-      <input
-        type="text"
-        placeholder="Tu nombre"
-        value={nombreUsuario}
-        onChange={(e) => {
-          setNombreUsuario(e.target.value);
-          setMensaje("");
-        }}
-        style={{ width: "100%", marginBottom: 8 }}
-      />
-      <button onClick={manejarCrearSala} style={{ width: "100%" }}>
-        Crear Sala
-      </button>
-      {mensaje && (
-        <p
+      >
+        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>Crear Sala</h2>
+
+        <input
+          type="text"
+          placeholder="Nombre de la sala"
+          value={nombreSala}
+          onChange={(e) => {
+            setNombreSala(e.target.value);
+            setMensaje("");
+          }}
           style={{
-            marginTop: 12,
-            color: esError ? "red" : "green",
+            width: "100%",
+            padding: "10px",
+            marginBottom: "12px",
+            borderRadius: "6px",
+            border: "1px solid #444",
+            backgroundColor: "#1e1e2f",
+            color: "#f5f5f5",
+          }}
+        />
+
+        <input
+          type="number"
+          min={1}
+          placeholder="Límite de usuarios"
+          value={limite}
+          onChange={(e) => {
+            setLimite(Number(e.target.value));
+            setMensaje("");
+          }}
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "12px",
+            borderRadius: "6px",
+            border: "1px solid #444",
+            backgroundColor: "#1e1e2f",
+            color: "#f5f5f5",
+          }}
+        />
+
+        <input
+          type="text"
+          placeholder="Tu nombre"
+          value={nombreUsuario}
+          onChange={(e) => {
+            setNombreUsuario(e.target.value);
+            setMensaje("");
+          }}
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "16px",
+            borderRadius: "6px",
+            border: "1px solid #444",
+            backgroundColor: "#1e1e2f",
+            color: "#f5f5f5",
+          }}
+        />
+
+        <button
+          onClick={manejarCrearSala}
+          style={{
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "#000000",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "6px",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+          onMouseOver={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#ca60df";
+          }}
+          onMouseOut={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#000000";
           }}
         >
-          {mensaje}
-        </p>
-      )}
+          Crear Sala
+        </button>
+
+        {mensaje && (
+          <p
+            style={{
+              marginTop: "15px",
+              color: esError ? "#e57373" : "#81c784",
+              textAlign: "center",
+              fontWeight: "bold",
+            }}
+          >
+            {mensaje}
+          </p>
+        )}
+      </div>
     </div>
   );
 };

@@ -11,7 +11,6 @@ const App: React.FC = () => {
   const [usuario, setUsuario] = useState<string>("");
   const [pin, setPin] = useState<string>("");
 
-  // Memoizar para evitar renders innecesarios
   const manejarUnirSala = useCallback(
     (nombreSala: string, nombreUsuario: string, pin: string) => {
       setSala(nombreSala);
@@ -21,7 +20,6 @@ const App: React.FC = () => {
     []
   );
 
-  // Opcional: función para "salir" del chat y volver a crear/unir sala
   const manejarSalir = () => {
     setSala(null);
     setUsuario("");
@@ -37,31 +35,54 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/crear" element={<CrearSala onUnirSala={manejarUnirSala} />} />
+        <Route
+          path="/crear"
+          element={
+            <div className="container-game">
+              <div className="game-box">
+                <CrearSala onUnirSala={manejarUnirSala} />
+              </div>
+            </div>
+          }
+        />
         <Route
           path="/unir"
           element={
-            <>
-              <UnirSala onUnirSala={manejarUnirSala} />
-              <br />
-              <Salas />
-            </>
+            <div className="container-game">
+              <div className="game-box">
+                <UnirSala onUnirSala={manejarUnirSala} />
+              </div>
+              <div className="game-box">
+                <Salas />
+              </div>
+            </div>
           }
         />
         <Route
           path="*"
           element={
-            <div style={{ maxWidth: 400, margin: "auto" }}>
-              <h1>Bienvenido</h1>
-              <Link to="/crear">
-                <button style={{ marginRight: 10 }}>Crear Sala</button>
-              </Link>
-              <Link to="/unir">
-                <button>Unirse a Sala</button>
-              </Link>
+            <div className="welcome-container">
+              <h1>Bienvenido al Chat</h1>
+              <div className="team-list">
+                <h3>Integrantes:</h3>
+                <div className="team-members">
+                  <span>Antoni Toapanta</span><br />
+                  <span>Milena Maldonado</span><br />
+                  <span>Dennis Tovar</span>
+                </div>
+              </div>
+              <div className="button-group">
+                <Link to="/crear">
+                  <button className="btn-primary">Crear Sala</button>
+                </Link>
+                <Link to="/unir">
+                  <button className="btn-primary">Unirse a Sala</button>
+                </Link>
+              </div>
             </div>
           }
         />
+
       </Routes>
     </BrowserRouter>
   );

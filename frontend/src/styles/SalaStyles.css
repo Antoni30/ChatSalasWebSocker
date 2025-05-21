@@ -1,0 +1,85 @@
+/* Estilo mejorado para salastyle.css */
+
+.form-container {
+  flex: 1 1 500px; /* un poco más ancho */
+  max-width: 500px; /* mayor ancho máximo */
+  background-color: #1e1a33;
+  padding: 32px 36px; /* más padding para espacio interior */
+  border-radius: 16px; /* bordes más redondeados */
+  box-shadow: 0 0 25px #7b61ffaa; /* sombra más suave y grande */
+  color: #d7caf7;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+  transition: transform 0.3s ease;
+}
+
+.form-container:hover {
+  transform: scale(1.03);
+}
+
+.form-container h2 {
+ color: #ffffff;
+  margin: 0 0 16px 0;
+  text-align: center;
+  user-select: none;
+  font-size: 2.4rem;
+  font-weight: 700;
+  text-shadow: 0 0 8px #9f7aea88;
+  letter-spacing: 1.5px;
+  font-family: 'Segoe UI Black', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.form-container input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  background-color: #3c2f6b;
+  color: #e0d6ff;
+  font-size: 18px;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease;
+}
+
+.form-container input:focus {
+  background-color: #584ebf;
+  color: #fff;
+  box-shadow: 0 0 8px #7b61ffaa;
+}
+
+.form-container button {
+  width: 100%;
+  padding: 16px;
+  border-radius: 10px;
+  border: none;
+  background-color: #7b61ff;
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-container button:hover {
+  background-color: #9f7aea;
+  box-shadow: 0 0 15px #9f7aeacc;
+}
+
+.form-message {
+  margin-top: 12px;
+  font-weight: 600;
+  text-align: center;
+  user-select: none;
+  font-size: 1.15rem;
+}
+
+.form-message.error {
+  color: #e66bff;
+}
+
+.form-message.success {
+  color: #43cee6;
+}

@@ -22,44 +22,33 @@ const Chat: React.FC<ChatProps> = ({ sala, nombreUsuario, pin }) => {
     socket.emit("unirSala", { sala, nombreUsuario, pin });
 
     socket.on("salaCreada", ({ sala: salaCreada, nombreUsuario }) => {
-      setMensajes((prev) => [
+      setMensajes(prev => [
         ...prev,
         { nombreUsuario: "Sistema", contenido: `Sala "${salaCreada}" creada.` },
-        { nombreUsuario: "Sistema", contenido: `${nombreUsuario} se ha unido.` },
+        { nombreUsuario: "Sistema", contenido: `${nombreUsuario} se ha unido.` }
       ]);
     });
 
     socket.on("nuevoUsuario", ({ nombreUsuario, ip }: { nombreUsuario: string; ip?: string }) => {
-      const mensaje = ip
+      const msg = ip
         ? `${nombreUsuario} se ha unido desde IP ${ip}`
         : `${nombreUsuario} se ha unido.`;
-
-      setMensajes((prev) => [
-        ...prev,
-        { nombreUsuario: "Sistema", contenido: mensaje },
-      ]);
+      setMensajes(prev => [...prev, { nombreUsuario: "Sistema", contenido: msg }]);
     });
 
     socket.on("mensajePrivado", ({ contenido }) => {
-      setMensajes((prev) => [
-        ...prev,
-        { nombreUsuario: "Sistema", contenido },
-      ]);
+      setMensajes(prev => [...prev, { nombreUsuario: "Sistema", contenido }]);
     });
 
     socket.on("mensaje", (msg: Mensaje) => {
-      setMensajes((prev) => [...prev, msg]);
+      setMensajes(prev => [...prev, msg]);
     });
 
     socket.on("usuarioDesconectado", ({ nombreUsuario }) => {
-      setMensajes((prev) => [
+      setMensajes(prev => [
         ...prev,
-        { nombreUsuario: "Sistema", contenido: `${nombreUsuario} ha salido.` },
+        { nombreUsuario: "Sistema", contenido: `${nombreUsuario} ha salido.` }
       ]);
-    });
-
-    socket.on("pinSala", (data: { pin: string }) => {
-      console.log("PIN recibido:", data.pin);
     });
 
     return () => {
@@ -68,7 +57,6 @@ const Chat: React.FC<ChatProps> = ({ sala, nombreUsuario, pin }) => {
       socket.off("mensajePrivado");
       socket.off("mensaje");
       socket.off("usuarioDesconectado");
-      socket.off("pinSala");
       socket.off("error");
     };
   }, [sala, nombreUsuario, pin]);
@@ -80,7 +68,6 @@ const Chat: React.FC<ChatProps> = ({ sala, nombreUsuario, pin }) => {
   const enviarMensaje = () => {
     const contenido = mensajeInput.trim();
     if (!contenido) return;
-
     socket.emit("mensaje", { contenido });
     setMensajeInput("");
   };
@@ -93,126 +80,197 @@ const Chat: React.FC<ChatProps> = ({ sala, nombreUsuario, pin }) => {
   };
 
   return (
-    <div style={{ maxWidth: 500, margin: "auto", position: "relative" }}>
+    <div
+      style={{
+        maxWidth: 800,
+        //margin: "40px auto",
+        display: "flex",
+        gap: "40px",
+        padding: "20px",
+        background: "rgba(30, 30, 47, 0.8)",
+        borderRadius: "16px",
+        boxShadow: "0 8px 20px rgba(0,0,0,0.5)",
+       // color: "#e0d9ff",
+        alignItems: "center",
+      }}
+    >
+      {/* Área de chat */}
       <div
         style={{
-          position: "relative",
-          top: 10,
-          right: 10,
-          backgroundColor: "#007bff",
-          color: "white",
-          padding: "6px 12px",
-          borderRadius: "12px",
-          fontWeight: "bold",
-          userSelect: "text",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-          zIndex: 10,
+          width: "600px",
           display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          cursor: "default",
+          flexDirection: "column",
+          gap: "16px",
         }}
-        title="PIN de la sala"
       >
-        <span>PIN: {pin}</span>
+        <h2
+          style={{
+            textAlign: "center",
+            textShadow: "0 0 8px #9f7aea88",
+            margin: 0,
+          }}
+        >
+          Chat en sala: {sala}
+        </h2>
+
+        <div
+          style={{
+            height: "400px",
+            overflowY: "auto",
+            padding: "16px",
+            background: "rgba(46, 46, 66, 0.6)",
+            borderRadius: "12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          {mensajes.map((msg, i) => {
+            const esPropio = msg.nombreUsuario === nombreUsuario;
+            const esSistema = msg.nombreUsuario === "Sistema";
+            const bg = esSistema
+              ? "rgba(255,255,255,0.1)"
+              : esPropio
+              ? "linear-gradient(145deg, #6a00b0, #370064)"
+              : "rgba(255,255,255,0.2)";
+            const color = esSistema
+              ? "#bbbbbb"
+              : esPropio
+              ? "#e0d9ff"
+              : "#f5f5f5";
+
+            return (
+              <div
+                key={i}
+                style={{
+                  alignSelf: esPropio ? "flex-end" : "flex-start",
+                  background: bg,
+                  color,
+                  padding: "10px 14px",
+                  borderRadius: "20px",
+                  maxWidth: "70%",
+                  wordBreak: "break-word",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                }}
+              >
+                {!esSistema && (
+                  <div
+                    style={{
+                      fontSize: "0.8rem",
+                      fontWeight: 700,
+                      marginBottom: "4px",
+                      opacity: 0.8,
+                    }}
+                  >
+                    {msg.nombreUsuario}
+                  </div>
+                )}
+                <div>{msg.contenido}</div>
+              </div>
+            );
+          })}
+          <div ref={mensajesEndRef} />
+        </div>
+
+        <div style={{ display: "flex", gap: "8px" }}>
+          <input
+            placeholder="Escribe tu mensaje"
+            value={mensajeInput}
+            onChange={e => setMensajeInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && enviarMensaje()}
+            style={{
+              flex: 1,
+              padding: "10px",
+              borderRadius: "8px",
+              border: "none",
+              background: "#1e1e2f",
+              color: "#e0d9ff",
+              outline: "none",
+            }}
+          />
+          <button
+            onClick={enviarMensaje}
+            style={{
+              padding: "10px 16px",
+              borderRadius: "8px",
+              border: "none",
+              background: "linear-gradient(145deg, #370064, #6a00b0)",
+              color: "#e0d9ff",
+              fontWeight: "700",
+              cursor: "pointer",
+              boxShadow: "0 2px 6px rgba(108, 51, 255, 0.5)",
+            }}
+          >
+            Enviar
+          </button>
+        </div>
+      </div>
+
+      {/* Sidebar de PIN */}
+      <div
+        style={{
+          width: "200px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "16px",
+          background: "linear-gradient(145deg, #370064, #6a00b0)",
+          padding: "16px",
+          borderRadius: "12px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+        }}
+      >
+        <h3
+          style={{
+            margin: 0,
+            textAlign: "center",
+            color: "#e0d9ff",
+            textShadow: "0 0 6px #9f7aea88",
+          }}
+        >
+          PIN de Sala
+        </h3>
+        <div
+          style={{
+            fontSize: "1.4rem",
+            fontWeight: "700",
+            textAlign: "center",
+            color: "#fff",
+            background: "rgba(255,255,255,0.1)",
+            padding: "10px",
+            borderRadius: "8px",
+            userSelect: "text",
+          }}
+        >
+          {pin}
+        </div>
         <button
           onClick={copiarPin}
           style={{
-            backgroundColor: "white",
+            background: "#e0d9ff",
+            color: "#370064",
             border: "none",
             borderRadius: "6px",
-            padding: "2px 8px",
+            padding: "8px 12px",
             cursor: "pointer",
-            fontWeight: "bold",
-            color: "#007bff",
-            userSelect: "none",
+            fontWeight: "700",
+            boxShadow: "0 2px 6px rgba(108, 51, 255, 0.5)",
           }}
-          aria-label="Copiar PIN"
-          title="Copiar PIN"
         >
-          📋
+          📋 Copiar
         </button>
         {copiado && (
           <span
             style={{
-              marginLeft: 8,
-              color: "lightgreen",
-              fontWeight: "bold",
-              userSelect: "none",
-              transition: "opacity 0.3s ease",
+              textAlign: "center",
+              color: "#81c784",
+              fontWeight: "700",
             }}
           >
-            Copiado!
+            ¡Copiado!
           </span>
         )}
       </div>
-
-      <h2>Chat en sala: {sala}</h2>
-      <div
-        style={{
-          height: 300,
-          overflowY: "auto",
-          border: "1px solid #ccc",
-          padding: 8,
-          marginBottom: 8,
-          backgroundColor: "#f9f9f9",
-          borderRadius: 4,
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px",
-        }}
-      >
-        {mensajes.map((msg, i) => {
-          const esMensajePropio = msg.nombreUsuario === nombreUsuario;
-          const esSistema = msg.nombreUsuario === "Sistema";
-
-          return (
-            <div
-              key={i}
-              style={{
-                alignSelf: esMensajePropio ? "flex-end" : "flex-start",
-                backgroundColor: esMensajePropio
-                  ? "#d0e6ff"
-                  : esSistema
-                  ? "#eee"
-                  : "#fff",
-                color: esSistema ? "gray" : esMensajePropio ? "blue" : "black",
-                fontStyle: esSistema ? "italic" : "normal",
-                padding: "8px 12px",
-                borderRadius: "16px",
-                maxWidth: "70%",
-                wordBreak: "break-word",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-              }}
-            >
-              {!esSistema && (
-                <div
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: 12,
-                    marginBottom: 4,
-                    userSelect: "none",
-                  }}
-                >
-                  {msg.nombreUsuario}
-                </div>
-              )}
-              <div>{msg.contenido}</div>
-            </div>
-          );
-        })}
-        <div ref={mensajesEndRef} />
-      </div>
-      <input
-        placeholder="Escribe tu mensaje"
-        value={mensajeInput}
-        onChange={(e) => setMensajeInput(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && enviarMensaje()}
-        style={{ width: "100%", marginBottom: 8, padding: "8px" }}
-      />
-      <button onClick={enviarMensaje} style={{ width: "100%", padding: "8px" }}>
-        Enviar
-      </button>
     </div>
   );
 };
