@@ -1,9 +1,10 @@
 import { generarPinUnico6Digitos } from "../utils/PIN.js";
+import { emitirEstadoSala } from "./emitirEstadoSala.js";
 
-export const crearSala = (socket, salas, io, emitirSalasActualizadas,ipsConectadas) => {
+export const crearSala = (socket, salas, io, emitirSalasActualizadas, ipsConectadas) => {
   socket.on("crearSala", ({ nombreSala, limite, nombreUsuario }) => {
     if (!salas[nombreSala]) {
-      const ipCompleta = socket.handshake.address; 
+      const ipCompleta = socket.handshake.address;
       const ipCliente = ipCompleta.replace(/^::ffff:/, '');
 
       // Validar que esta IP no tenga ya una sala creada
@@ -43,6 +44,7 @@ export const crearSala = (socket, salas, io, emitirSalasActualizadas,ipsConectad
       socket.emit("unidoASala", { sala: nombreSala, nombreUsuario, pin });
 
       emitirSalasActualizadas();
+      emitirEstadoSala(nombreSala, io, salas);
     } else {
       socket.emit("error", { mensaje: `La sala "${nombreSala}" ya existe.` });
       console.log(`Intento de crear sala ya existente: "${nombreSala}"`);

@@ -8,6 +8,7 @@ import { unirSala } from "./handlers/unirSala.js";
 import { mensaje } from "./handlers/mesaje.js";
 import { listarSalas } from "./handlers/listarSalas.js";
 import { manejoSalidaUsuario } from './handlers/manejoSalida.js';
+import { emitirEstadoSala } from "./handlers/emitirEstadoSala.js";
 
 
 dotenv.config();
@@ -37,6 +38,10 @@ io.on("connection", (socket) => {
   unirSala(socket, salas, io, emitirSalasActualizadas,ipsConectadas);
   mensaje(socket, io);
   manejoSalidaUsuario(socket, salas, io, emitirSalasActualizadas,ipsConectadas);
+
+  socket.on("pedirEstadoSala", (nombreSala) => {
+    emitirEstadoSala(nombreSala, io, salas);
+  });
 
   socket.on("error", (error) => {
     console.error("Error del socket:", error);

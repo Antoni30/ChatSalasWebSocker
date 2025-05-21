@@ -1,3 +1,5 @@
+import { emitirEstadoSala } from "./emitirEstadoSala.js";
+
 export const manejoSalidaUsuario = (socket, salas, io, emitirSalasActualizadas, ipsConectadas) => {
   
   // Función que elimina un usuario de su sala (por socket.id)
@@ -34,6 +36,7 @@ export const manejoSalidaUsuario = (socket, salas, io, emitirSalasActualizadas, 
         socket.leave(salaNombre);
 
         console.log(`${nombreUsuarioEncontrado} desconectado de sala "${salaNombre}". Usuarios restantes: ${salaObj.usuarios.size}`);
+        emitirEstadoSala(salaNombre, io, salas); 
 
         manejarCreadorYEliminacion(salaNombre, salaObj, salas, io, emitirSalasActualizadas, ipsConectadas);
 
@@ -71,10 +74,10 @@ export const manejoSalidaUsuario = (socket, salas, io, emitirSalasActualizadas, 
   }
 
   // Listener desconexión automática (pérdida de conexión)
-  socket.on('disconnect', () => {
-    console.log('Cliente desconectado:', socket.id);
-    eliminarUsuarioDeSala(socket, salas, io, emitirSalasActualizadas, ipsConectadas);
-  });
+ socket.on('disconnect', () => {
+  console.log('Cliente desconectado:', socket.id);
+  eliminarUsuarioDeSala(socket, salas, io, emitirSalasActualizadas, ipsConectadas);
+});
 
   // Listener para salida voluntaria del usuario
   socket.on('salirSala', ({ sala, nombreUsuario }) => {

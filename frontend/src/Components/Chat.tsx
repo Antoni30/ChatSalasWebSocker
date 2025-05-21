@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import socket from "../utils/socket";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 
-
 interface Mensaje {
   nombreUsuario: string;
   contenido: string;
@@ -13,26 +12,27 @@ const Chat: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Obtener datos enviados por navegación (estado)
   const nombreUsuario = location.state?.nombreUsuario as string | undefined;
   const pin = location.state?.pin as string | undefined;
 
+  const [conectados, setConectados] = useState<number>(0);
+  const [limite, setLimite] = useState<number>(0);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [mensajeInput, setMensajeInput] = useState("");
   const [copiado, setCopiado] = useState(false);
+  const [usuarios, setUsuarios] = useState<string[]>([]);
   const mensajesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Validación básica para evitar entrar sin datos
     if (!sala || !nombreUsuario || !pin) {
       navigate("/unir");
       return;
     }
 
-    // Emitir solicitud para unirse a la sala
     socket.emit("unirSala", { sala, nombreUsuario, pin });
+    // Pedir el estado de la sala explícitamente después de unirse
+    socket.emit("pedirEstadoSala", sala);
 
-    // Listeners para los eventos socket
     const onSalaCreada = ({ sala: salaCreada, nombreUsuario }: { sala: string; nombreUsuario: string }) => {
       setMensajes(prev => [
         ...prev,
@@ -58,19 +58,26 @@ const Chat: React.FC = () => {
       setMensajes(prev => [...prev, { nombreUsuario: "Sistema", contenido: `${nombreUsuario} ha salido.` }]);
     };
 
+    socket.on("estadoSala", (estado) => {
+      setConectados(estado.conectados);
+      setLimite(estado.capacidadMaxima);
+      if (estado.usuarios) setUsuarios(estado.usuarios);
+     // alert(`DEBUG\nconectados: ${estado.conectados}\nlimite: ${estado.capacidadMaxima}\nusuarios: ${estado.usuarios?.join(", ")}`);
+    });
+
     socket.on("salaCreada", onSalaCreada);
     socket.on("nuevoUsuario", onNuevoUsuario);
     socket.on("mensajePrivado", onMensajePrivado);
     socket.on("mensaje", onMensaje);
     socket.on("usuarioDesconectado", onUsuarioDesconectado);
 
-    // Cleanup para remover listeners al desmontar componente
     return () => {
       socket.off("salaCreada", onSalaCreada);
       socket.off("nuevoUsuario", onNuevoUsuario);
       socket.off("mensajePrivado", onMensajePrivado);
       socket.off("mensaje", onMensaje);
       socket.off("usuarioDesconectado", onUsuarioDesconectado);
+      socket.off("estadoSala");
       socket.removeAllListeners();
     };
   }, [sala, nombreUsuario, pin, navigate]);
@@ -94,10 +101,8 @@ const Chat: React.FC = () => {
     });
   };
 
-  // Desconexión voluntaria: avisa al servidor, limpia listeners y redirige
   const manejarDesconectar = () => {
     if (!sala || !nombreUsuario) return;
-
     socket.emit("salirSala", { sala, nombreUsuario });
     socket.removeAllListeners();
     navigate("/unir");
@@ -116,22 +121,8 @@ const Chat: React.FC = () => {
         alignItems: "center",
       }}
     >
-      {/* Área de chat */}
-      <div
-        style={{
-          width: "600px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-        }}
-      >
-        <h2
-          style={{
-            textAlign: "center",
-            textShadow: "0 0 8px #9f7aea88",
-            margin: 0,
-          }}
-        >
+      <div style={{ width: "600px", display: "flex", flexDirection: "column", gap: "16px" }}>
+        <h2 style={{ textAlign: "center", textShadow: "0 0 8px #9f7aea88", margin: 0 }}>
           Chat en sala: {sala}
         </h2>
 
@@ -247,8 +238,7 @@ const Chat: React.FC = () => {
           Desconectar
         </button>
       </div>
-
-      {/* Sidebar de PIN */}
+   
       <div
         style={{
           width: "200px",
@@ -291,27 +281,27 @@ const Chat: React.FC = () => {
           style={{
             background: "#e0d9ff",
             color: "#370064",
+            padding: "10px",
+            borderRadius: "8px",
             border: "none",
-            borderRadius: "6px",
-            padding: "8px 12px",
+            fontWeight: "bold",
             cursor: "pointer",
-            fontWeight: "700",
-            boxShadow: "0 2px 6px rgba(108, 51, 255, 0.5)",
+            boxShadow: "0 2px 6px rgba(224, 217, 255, 0.5)",
           }}
         >
-          📋 Copiar
+          {copiado ? "¡Copiado!" : "Copiar PIN"}
         </button>
-        {copiado && (
-          <span
-            style={{
-              textAlign: "center",
-              color: "#81c784",
-              fontWeight: "700",
-            }}
-          >
-            ¡Copiado!
-          </span>
-        )}
+        <div style={{ color: "#fff", fontSize: "0.9rem" }}>
+          {conectados} / {limite} conectados
+        </div>
+        <div style={{ color: "#fff", fontSize: "0.9rem", marginTop: 8 }}>
+          <b>Usuarios:</b>
+          <ul style={{ paddingLeft: 18, margin: 0 }}>
+            {usuarios.map((u) => (
+              <li key={u} style={{ fontSize: "0.9rem", color: "#e0d9ff" }}>{u}</li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

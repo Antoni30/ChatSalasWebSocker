@@ -1,4 +1,6 @@
-export const unirSala = (socket, salas, io, emitirSalasActualizadas, ipsConectadas) => {
+import { emitirEstadoSala } from "./emitirEstadoSala.js";
+
+export const unirSala = (socket, salas, io, emitirSalasActualizadas) => {
   socket.on("unirSala", ({ sala, nombreUsuario, pin }) => {
     if (!salas[sala]) {
       socket.emit("error", { mensaje: `La sala "${sala}" no existe.` });
@@ -23,14 +25,7 @@ export const unirSala = (socket, salas, io, emitirSalasActualizadas, ipsConectad
     const ipCompleta = socket.handshake.address;
     const ipCliente = ipCompleta.replace(/^::ffff:/, '');
 
-    // Validar que esta IP no tenga ya usuario en alguna sala
-    if (ipsConectadas.has(ipCliente)) {
-      socket.emit("error", { mensaje: "Ya tienes una sesión activa en otra sala desde este equipo." });
-      return;
-    }
-
     salas[sala].usuarios.set(nombreUsuario, { socketId: socket.id, ip: ipCliente });
-    ipsConectadas.set(ipCliente, sala);
 
     socket.join(sala);
     socket.salaActual = sala;
@@ -38,6 +33,7 @@ export const unirSala = (socket, salas, io, emitirSalasActualizadas, ipsConectad
 
     socket.emit("pinSala", salas[sala].pin);
     socket.emit("unidoASala", { sala, nombreUsuario, pin });
+    emitirEstadoSala(sala, io, salas); // ✅
 
     socket.to(sala).emit("nuevoUsuario", { nombreUsuario, ip: ipCliente });
 
