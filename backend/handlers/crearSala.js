@@ -1,33 +1,40 @@
-import { generarPinUUID } from "../utils/PIN.js";
+import { generarPinUnico6Digitos } from "../utils/PIN.js";
 
-export const crearSala = (socket, salas, io, emitirSalasActualizadas) => {
+export const crearSala = (socket, salas, io, emitirSalasActualizadas,ipsConectadas) => {
   socket.on("crearSala", ({ nombreSala, limite, nombreUsuario }) => {
     if (!salas[nombreSala]) {
+      const ipCompleta = socket.handshake.address; 
+      const ipCliente = ipCompleta.replace(/^::ffff:/, '');
+
+      // Validar que esta IP no tenga ya una sala creada
+      if (ipsConectadas.has(ipCliente)) {
+        socket.emit("error", { mensaje: "Ya tienes una sala activa creada desde tu equipo." });
+        return;
+      }
+
       salas[nombreSala] = {
-        usuarios: new Map(), // Cambiamos a Map para guardar nombreUsuario e IP
+        usuarios: new Map(),
         limite: parseInt(limite, 10) || 10,
         creador: socket.id,
-        pin: generarPinUUID(),
+        pin: generarPinUnico6Digitos(),
       };
 
-              // Obtener IP y limpiar prefijo ::ffff: si existe
-        const ipCompleta = socket.handshake.address; // Ejemplo: "::ffff:192.168.1.31"
-        const ipCliente = ipCompleta.replace(/^::ffff:/, '');
-
-
-      // Validar nombre único en esta sala (aquí está vacía, es creación)
+      // Validar nombreUsuario (aunque la sala está vacía)
       if (salas[nombreSala].usuarios.has(nombreUsuario)) {
         socket.emit("error", { mensaje: `El nombre "${nombreUsuario}" ya está en uso en la sala.` });
         return;
       }
 
+      // Guardar usuario y sala en la estructura
       salas[nombreSala].usuarios.set(nombreUsuario, { socketId: socket.id, ip: ipCliente });
+      ipsConectadas.set(ipCliente, nombreSala);
 
       socket.join(nombreSala);
 
       socket.salaActual = nombreSala;
       socket.nombreUsuario = nombreUsuario;
       const pin = salas[nombreSala].pin;
+
       console.log(
         `Sala "${nombreSala}" creada por ${nombreUsuario} (${socket.id}, IP: ${ipCliente}) con límite ${salas[nombreSala].limite} y pin ${pin}`
       );
@@ -42,4 +49,3 @@ export const crearSala = (socket, salas, io, emitirSalasActualizadas) => {
     }
   });
 };
-

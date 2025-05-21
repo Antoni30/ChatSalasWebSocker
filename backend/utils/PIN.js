@@ -1,5 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
-export function generarPinUUID() {
-    const pin = uuidv4()
+export function generarPinUnico6Digitos() {
+  const pin = Math.floor(100000 + Math.random() * 900000).toString();
   return pin;
 }
