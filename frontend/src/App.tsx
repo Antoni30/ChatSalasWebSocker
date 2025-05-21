@@ -28,30 +28,33 @@ const App: React.FC = () => {
             </div>
           } />
         <Route path="/chat/:sala" element={<Chat />} />
-       <Route
-          path="*"
-          element={
-            <div className="welcome-container">
-              <h1>Bienvenido al Chat</h1>
-              <div className="team-list">
-                <h3>Integrantes:</h3>
-                <div className="team-members">
-                  <span>Antoni Toapanta</span><br />
-                  <span>Milena Maldonado</span><br />
-                  <span>Dennis Tovar</span>
-                </div>
-              </div>
-              <div className="button-group">
-                <Link to="/crear">
-                  <button className="btn-primary">Crear Sala</button>
-                </Link>
-                <Link to="/unir">
-                  <button className="btn-primary">Unirse a Sala</button>
-                </Link>
-              </div>
-            </div>
-          }
-        />
+    <Route
+  path="*"
+  element={
+    <div className="welcome-container">
+      <h1 className="welcome-title">¡Bienvenido al Chat  📩!</h1>
+
+      <div className="team-list">
+        <h3 className="team-heading">Equipo de Desarrollo</h3>
+        <ul className="team-members">
+          <li>Antoni Toapanta</li>
+          <li>Milena Maldonado</li>
+          <li>Dennis Tovar</li>
+        </ul>
+      </div>
+
+      <div className="button-group">
+        <Link to="/crear">
+          <button className="btn-primary">Crear Sala</button>
+        </Link>
+        <Link to="/unir">
+          <button className="btn-primary">Unirse a Sala</button>
+        </Link>
+      </div>
+    </div>
+  }
+/>
+
       </Routes>
     </BrowserRouter>
   );
