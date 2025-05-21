@@ -1,65 +1,79 @@
 import React, { useEffect, useState, useRef } from "react";
 import socket from "../utils/socket";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 
-interface ChatProps {
-  sala: string;
-  nombreUsuario: string;
-  pin: string;
-}
 
 interface Mensaje {
   nombreUsuario: string;
   contenido: string;
 }
 
-const Chat: React.FC<ChatProps> = ({ sala, nombreUsuario, pin }) => {
+const Chat: React.FC = () => {
+  const { sala } = useParams<{ sala: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Obtener datos enviados por navegación (estado)
+  const nombreUsuario = location.state?.nombreUsuario as string | undefined;
+  const pin = location.state?.pin as string | undefined;
+
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [mensajeInput, setMensajeInput] = useState("");
   const [copiado, setCopiado] = useState(false);
   const mensajesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Validación básica para evitar entrar sin datos
+    if (!sala || !nombreUsuario || !pin) {
+      navigate("/unir");
+      return;
+    }
+
+    // Emitir solicitud para unirse a la sala
     socket.emit("unirSala", { sala, nombreUsuario, pin });
 
-    socket.on("salaCreada", ({ sala: salaCreada, nombreUsuario }) => {
+    // Listeners para los eventos socket
+    const onSalaCreada = ({ sala: salaCreada, nombreUsuario }: { sala: string; nombreUsuario: string }) => {
       setMensajes(prev => [
         ...prev,
         { nombreUsuario: "Sistema", contenido: `Sala "${salaCreada}" creada.` },
         { nombreUsuario: "Sistema", contenido: `${nombreUsuario} se ha unido.` }
       ]);
-    });
-
-    socket.on("nuevoUsuario", ({ nombreUsuario, ip }: { nombreUsuario: string; ip?: string }) => {
-      const msg = ip
-        ? `${nombreUsuario} se ha unido desde IP ${ip}`
-        : `${nombreUsuario} se ha unido.`;
-      setMensajes(prev => [...prev, { nombreUsuario: "Sistema", contenido: msg }]);
-    });
-
-    socket.on("mensajePrivado", ({ contenido }) => {
-      setMensajes(prev => [...prev, { nombreUsuario: "Sistema", contenido }]);
-    });
-
-    socket.on("mensaje", (msg: Mensaje) => {
-      setMensajes(prev => [...prev, msg]);
-    });
-
-    socket.on("usuarioDesconectado", ({ nombreUsuario }) => {
-      setMensajes(prev => [
-        ...prev,
-        { nombreUsuario: "Sistema", contenido: `${nombreUsuario} ha salido.` }
-      ]);
-    });
-
-    return () => {
-      socket.off("salaCreada");
-      socket.off("nuevoUsuario");
-      socket.off("mensajePrivado");
-      socket.off("mensaje");
-      socket.off("usuarioDesconectado");
-      socket.off("error");
     };
-  }, [sala, nombreUsuario, pin]);
+
+    const onNuevoUsuario = ({ nombreUsuario, ip }: { nombreUsuario: string; ip?: string }) => {
+      const msg = ip ? `${nombreUsuario} se ha unido desde IP ${ip}` : `${nombreUsuario} se ha unido.`;
+      setMensajes(prev => [...prev, { nombreUsuario: "Sistema", contenido: msg }]);
+    };
+
+    const onMensajePrivado = ({ contenido }: { contenido: string }) => {
+      setMensajes(prev => [...prev, { nombreUsuario: "Sistema", contenido }]);
+    };
+
+    const onMensaje = (msg: Mensaje) => {
+      setMensajes(prev => [...prev, msg]);
+    };
+
+    const onUsuarioDesconectado = ({ nombreUsuario }: { nombreUsuario: string }) => {
+      setMensajes(prev => [...prev, { nombreUsuario: "Sistema", contenido: `${nombreUsuario} ha salido.` }]);
+    };
+
+    socket.on("salaCreada", onSalaCreada);
+    socket.on("nuevoUsuario", onNuevoUsuario);
+    socket.on("mensajePrivado", onMensajePrivado);
+    socket.on("mensaje", onMensaje);
+    socket.on("usuarioDesconectado", onUsuarioDesconectado);
+
+    // Cleanup para remover listeners al desmontar componente
+    return () => {
+      socket.off("salaCreada", onSalaCreada);
+      socket.off("nuevoUsuario", onNuevoUsuario);
+      socket.off("mensajePrivado", onMensajePrivado);
+      socket.off("mensaje", onMensaje);
+      socket.off("usuarioDesconectado", onUsuarioDesconectado);
+      socket.removeAllListeners();
+    };
+  }, [sala, nombreUsuario, pin, navigate]);
 
   useEffect(() => {
     mensajesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -73,24 +87,32 @@ const Chat: React.FC<ChatProps> = ({ sala, nombreUsuario, pin }) => {
   };
 
   const copiarPin = () => {
+    if (!pin) return;
     navigator.clipboard.writeText(pin).then(() => {
       setCopiado(true);
       setTimeout(() => setCopiado(false), 2000);
     });
   };
 
+  // Desconexión voluntaria: avisa al servidor, limpia listeners y redirige
+  const manejarDesconectar = () => {
+    if (!sala || !nombreUsuario) return;
+
+    socket.emit("salirSala", { sala, nombreUsuario });
+    socket.removeAllListeners();
+    navigate("/unir");
+  };
+
   return (
     <div
       style={{
         maxWidth: 800,
-        //margin: "40px auto",
         display: "flex",
         gap: "40px",
         padding: "20px",
         background: "rgba(30, 30, 47, 0.8)",
         borderRadius: "16px",
         boxShadow: "0 8px 20px rgba(0,0,0,0.5)",
-       // color: "#e0d9ff",
         alignItems: "center",
       }}
     >
@@ -176,8 +198,8 @@ const Chat: React.FC<ChatProps> = ({ sala, nombreUsuario, pin }) => {
           <input
             placeholder="Escribe tu mensaje"
             value={mensajeInput}
-            onChange={e => setMensajeInput(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && enviarMensaje()}
+            onChange={(e) => setMensajeInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && enviarMensaje()}
             style={{
               flex: 1,
               padding: "10px",
@@ -204,6 +226,26 @@ const Chat: React.FC<ChatProps> = ({ sala, nombreUsuario, pin }) => {
             Enviar
           </button>
         </div>
+
+        <button
+          style={{
+            marginTop: "12px",
+            width: "100%",
+            padding: "12px",
+            borderRadius: "8px",
+            border: "none",
+            backgroundColor: "#b00020",
+            color: "white",
+            fontWeight: "bold",
+            cursor: "pointer",
+            boxShadow: "0 2px 6px rgba(176, 0, 32, 0.7)",
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#ff1a3c")}
+          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#b00020")}
+          onClick={manejarDesconectar}
+        >
+          Desconectar
+        </button>
       </div>
 
       {/* Sidebar de PIN */}

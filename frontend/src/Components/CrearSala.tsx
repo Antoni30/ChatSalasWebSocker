@@ -1,58 +1,49 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import socket from "../utils/socket";
 
 interface SalaCreadaPayload {
-  nombreSala: string;
+  sala: string;         // corregí nombre de propiedad para que sea igual al parámetro URL
   pin: string;
 }
 
-interface UnidoASalaPayload {
-  sala: string;
-  nombreUsuario: string;
-  pin: string;
-}
 
 interface ErrorPayload {
   mensaje: string;
 }
 
-interface CrearSalaProps {
-  onUnirSala: (sala: string, nombreUsuario: string, pin: string) => void;
-}
-
-const CrearSala: React.FC<CrearSalaProps> = ({ onUnirSala }) => {
+const CrearSala: React.FC = () => {
   const [nombreSala, setNombreSala] = useState<string>("");
   const [limite, setLimite] = useState<number>(2);
   const [nombreUsuario, setNombreUsuario] = useState<string>("");
   const [mensaje, setMensaje] = useState<string>("");
 
+  const navigate = useNavigate();
+
   useEffect(() => {
+    // Listener para sala creada - navegamos a la ruta chat con estado
     const onSalaCreada = (payload: SalaCreadaPayload) => {
-      setMensaje(`Sala "${payload.nombreSala}" creada con éxito. PIN: ${payload.pin}`);
-      setNombreSala("");
-      setLimite(2);
-      setNombreUsuario("");
-    };
-
-    const onUnidoASala = (payload: UnidoASalaPayload) => {
       setMensaje("");
-      onUnirSala(payload.sala, payload.nombreUsuario, payload.pin);
+      navigate(`/chat/${payload.sala}`, {
+        state: { pin: payload.pin, nombreUsuario },
+        replace: true,
+      });
     };
 
+    // Listener para errores
     const onErrorCrear = (error: ErrorPayload) => {
       setMensaje(error.mensaje || "Error desconocido");
     };
 
     socket.on("salaCreada", onSalaCreada);
-    socket.on("unidoASala", onUnidoASala);
     socket.on("error", onErrorCrear);
 
     return () => {
       socket.off("salaCreada", onSalaCreada);
-      socket.off("unidoASala", onUnidoASala);
       socket.off("error", onErrorCrear);
     };
-  }, [onUnirSala]);
+  }, [navigate, nombreUsuario]);
+
 
   const manejarCrearSala = () => {
     setMensaje("");
@@ -65,6 +56,10 @@ const CrearSala: React.FC<CrearSalaProps> = ({ onUnirSala }) => {
       limite,
       nombreUsuario: nombreUsuario.trim(),
     });
+  };
+
+  const manejarIrUnirSala = () => {
+    navigate("/unir");
   };
 
   const esError = mensaje.toLowerCase().includes("error");
@@ -159,6 +154,29 @@ const CrearSala: React.FC<CrearSalaProps> = ({ onUnirSala }) => {
           }}
         >
           Crear Sala
+        </button>
+
+        <button
+          onClick={manejarIrUnirSala}
+          style={{
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "#444444",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "6px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            margin: "1rem 0 0 0",
+          }}
+          onMouseOver={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#666666";
+          }}
+          onMouseOut={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#444444";
+          }}
+        >
+          Unir a Sala
         </button>
 
         {mensaje && (
